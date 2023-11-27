@@ -1,13 +1,3 @@
----
-title: "Proj_Term_V.20"
-author: "Alejandro Casillas"
-date: "2023-11-06"
-output:
-  html_document: default
-  word_document: default
----
-
-```{r, results='asis'}
 #Bring in required libraries.
 rm(list=ls())
 library(readr)
@@ -17,6 +7,10 @@ library(stringr)
 library(dplyr)
 library(ggplot2)
 library(cowplot)
+library(webshot)
+library(kableExtra)
+library(htmlTable)
+
 options(knitr.kable.N = Inf, knitr.kable.longtable = TRUE)
 #Data Cleaning Process:
 #Data was converted from .xls to .csv.
@@ -69,25 +63,35 @@ trade_volume_df <- trade_volume_df %>%
 
 
 # Convert Value from Thousands in USD to log(Thousands In USD)
+
 trade_volume_df$Value <- log(trade_volume_df$Value)
 
 str(trade_volume_df)
 
+save(trade_volume_df, file = "trade_volume_data.RData")
 #Now in Billions of USD
 
 summary_stats <- trade_volume_df %>%
   group_by(`Product Group`) %>%
   summarize(
-    Max_Value = max(Value),
-    Min_Value = min(Value),
-    mean_value = mean(Value),
-    sd_value = sd(Value)
+    Max_Value = round(max(Value), 3),
+    Min_Value = round(min(Value), 3),
+    mean_value = round(mean(Value), 3),
+    sd_value = round(sd(Value), 3)
   )  %>%
   arrange(desc(mean_value))
 
 #Visualization 1
 
-knitr::kable(summary_stats)
+viz1 <- htmlTable(summary_stats, align = "c")  # Use htmlTable to create HTML representation
+
+
+writeLines(as.character(viz1), "viz1.html")
+
+
+webshot("viz1.html", "viz1.png", delay = 1)
+
+
 
 #I was thinking of removing some Product Group members but I rather group them then remove them now that I think about it. Ill most likely do this in the next step for the project. I think I plan on making 3 groups of 7 from the 21. 
 
@@ -120,10 +124,10 @@ g1mexico_data_exp <- group1_df %>%
   filter(`Partner Name` == "Mexico", `Trade Flow` == "Export")
 
 g1canda_data_imp <- group1_df %>%   
-  filter(`Partner Name` == "Mexico",  `Trade Flow` == "Import")
+  filter(`Partner Name` == "Canada",  `Trade Flow` == "Import")
 
 g1canda_data_exp <- group1_df %>%  
-  filter(`Partner Name` == "Mexico",  `Trade Flow` == "Export")
+  filter(`Partner Name` == "Canada",  `Trade Flow` == "Export")
 
 #Group 2
 
@@ -134,10 +138,10 @@ g2mexico_data_exp <- group2_df %>%
   filter(`Partner Name` == "Mexico", `Trade Flow` == "Export")
 
 g2canda_data_imp <- group2_df %>%   
-  filter(`Partner Name` == "Mexico",  `Trade Flow` == "Import")
+  filter(`Partner Name` == "Canada",  `Trade Flow` == "Import")
 
 g2canda_data_exp <- group2_df %>%  
-  filter(`Partner Name` == "Mexico",  `Trade Flow` == "Export")
+  filter(`Partner Name` == "Canada",  `Trade Flow` == "Export")
 
 #Group 3
 
@@ -148,24 +152,39 @@ g3mexico_data_exp <- group3_df %>%
   filter(`Partner Name` == "Mexico", `Trade Flow` == "Export")
 
 g3canda_data_imp <- group3_df %>%   
-  filter(`Partner Name` == "Mexico",  `Trade Flow` == "Import")
+  filter(`Partner Name` == "Canada",  `Trade Flow` == "Import")
 
 g3canda_data_exp <- group3_df %>%  
-  filter(`Partner Name` == "Mexico",  `Trade Flow` == "Export")
+  filter(`Partner Name` == "Canada",  `Trade Flow` == "Export")
+
+#All kept
+
+g4mexico_data_imp <- trade_volume_df %>%  
+  filter(`Partner Name` == "Mexico", `Trade Flow` == "Import")
+
+g4mexico_data_exp <- trade_volume_df %>%  
+  filter(`Partner Name` == "Mexico", `Trade Flow` == "Export")
+
+g4canda_data_imp <- trade_volume_df %>%   
+  filter(`Partner Name` == "Canada",  `Trade Flow` == "Import")
+
+g4canda_data_exp <- trade_volume_df %>%  
+  filter(`Partner Name` == "canada",  `Trade Flow` == "Export")
+
 
 
 
 #MEX_PG_imp <- ggplot(mexico_data_imp, aes(x = Year, y = `Product Group`, fill = log(Value))) +
- # geom_tile() +
-  #scale_fill_gradient(low = "white", high = "red") +  # Adjust the color scale as needed
-  #labs(title = "MEX: Imports", x = "Year", y = "Product Group", fill = "Value (Millions USD)") +
-  #theme(legend.position = "none") 
+# geom_tile() +
+#scale_fill_gradient(low = "white", high = "red") +  # Adjust the color scale as needed
+#labs(title = "MEX: Imports", x = "Year", y = "Product Group", fill = "Value (Millions USD)") +
+#theme(legend.position = "none") 
 
 #MEX_PG_exp <- ggplot(mexico_data_exp, aes(x = Year, y = `Product Group`, fill = log(Value))) +
- # geom_tile() +
- # scale_fill_gradient(low = "white", high = "green") +  # Adjust the color scale as needed
- # labs(title = "Exports", x = "Year", y = "Product Group", fill = "Value (Millions USD)") +
-  #theme(legend.position = "none") 
+# geom_tile() +
+# scale_fill_gradient(low = "white", high = "green") +  # Adjust the color scale as needed
+# labs(title = "Exports", x = "Year", y = "Product Group", fill = "Value (Millions USD)") +
+#theme(legend.position = "none") 
 
 #Group 1 Heat Map
 
@@ -221,11 +240,15 @@ g3combined_heatmaps_MEX <- plot_grid(g3MEX_PG_imp, g3MEX_PG_exp, ncol = 2, align
 #Visualization 2
 
 
-g1combined_heatmaps_MEX + theme(legend.position = "bottom", legend.justification = "right")
+viz2.1 = g1combined_heatmaps_MEX + theme(legend.position = "bottom", legend.justification = "right")
+viz2.1
+ggsave("viz2.1.png", viz2.1, width = 8, height = 6)
 
-g2combined_heatmaps_MEX + theme(legend.position = "bottom", legend.justification = "right")
+viz2.2 = g2combined_heatmaps_MEX + theme(legend.position = "bottom", legend.justification = "right")
+ggsave("viz2.2.png", viz2.2, width = 8, height = 6)
 
-g3combined_heatmaps_MEX + theme(legend.position = "bottom", legend.justification = "right")
+viz2.3 = g3combined_heatmaps_MEX + theme(legend.position = "bottom", legend.justification = "right")
+ggsave("viz2.3.png", viz2.3, width = 8, height = 6)
 
 
 
@@ -243,8 +266,8 @@ g1MEX_PG_exp2 <- ggplot(g1mexico_data_exp, aes( x = Year, y = as.numeric(Value),
   theme(legend.position = "right")
 
 g1combined_line_plots_MEX <- plot_grid(g1MEX_PG_imp2 + theme(legend.position = "none"),
-                                     g1MEX_PG_exp2 + theme(legend.position = "none"),
-                                     ncol = 2, align = "h", axis = "tb")
+                                       g1MEX_PG_exp2 + theme(legend.position = "none"),
+                                       ncol = 2, align = "h", axis = "tb")
 
 g1legend_MEX <- get_legend(g1MEX_PG_imp2 + theme(legend.position = "right"))
 g1combined_line_plots_MEX <- cowplot::plot_grid(
@@ -268,8 +291,8 @@ g2MEX_PG_exp2 <- ggplot(g2mexico_data_exp, aes( x = Year, y = as.numeric(Value),
   theme(legend.position = "right")
 
 g2combined_line_plots_MEX <- plot_grid(g2MEX_PG_imp2 + theme(legend.position = "none"),
-                                     g2MEX_PG_exp2 + theme(legend.position = "none"),
-                                     ncol = 2, align = "h", axis = "tb")
+                                       g2MEX_PG_exp2 + theme(legend.position = "none"),
+                                       ncol = 2, align = "h", axis = "tb")
 
 g2legend_MEX <- get_legend(g2MEX_PG_imp2 + theme(legend.position = "right"))
 g2combined_line_plots_MEX <- cowplot::plot_grid(
@@ -295,8 +318,8 @@ g3MEX_PG_exp2 <- ggplot(g3mexico_data_exp, aes( x = Year, y = as.numeric(Value),
   theme(legend.position = "right")
 
 g3combined_line_plots_MEX <- plot_grid(g3MEX_PG_imp2 + theme(legend.position = "none"),
-                                     g3MEX_PG_exp2 + theme(legend.position = "none"),
-                                     ncol = 2, align = "h", axis = "tb")
+                                       g3MEX_PG_exp2 + theme(legend.position = "none"),
+                                       ncol = 2, align = "h", axis = "tb")
 
 g3legend_MEX <- get_legend(g3MEX_PG_imp2 + theme(legend.position = "right"))
 g3combined_line_plots_MEX <- cowplot::plot_grid(
@@ -307,13 +330,48 @@ g3combined_line_plots_MEX <- cowplot::plot_grid(
   rel_widths = c(2, 1.4)
 )
 
+#All Logged
+
+
+g4MEX_PG_imp2 <- ggplot(g4mexico_data_imp, aes(x = Year, y = as.numeric(Value), color = `Product Group`)) +
+  geom_line() +
+  labs(title = "MEX: Imports",x = "Year", y = "Log Value (Thousands USD)", color = "Product Group") +
+  theme(legend.position = "right")
+
+g4MEX_PG_exp2 <- ggplot(g4mexico_data_exp, aes( x = Year, y = as.numeric(Value), color = `Product Group`)) +
+  geom_line() +
+  labs(title = "Exports", x = "Year", y = "Log Value (Thousands USD)", color = "Product Group") +
+  theme(legend.position = "right")
+
+g4combined_line_plots_MEX <- plot_grid(g4MEX_PG_imp2 + theme(legend.position = "none"),
+                                       g4MEX_PG_exp2 + theme(legend.position = "none"),
+                                       ncol = 2, align = "h", axis = "tb")
+
+g4legend_MEX <- get_legend(g4MEX_PG_imp2 + theme(legend.position = "right"))
+g4combined_line_plots_MEX <- cowplot::plot_grid(
+  g4combined_line_plots_MEX, 
+  g4legend_MEX, 
+  ncol = 2, 
+  align = "v", 
+  rel_widths = c(2, 1.4)
+)
+
+
+
 #Visualization 3
 
-g1combined_line_plots_MEX
+viz3.1 = g1combined_line_plots_MEX
+ggsave("viz3.1.png", viz3.1, width = 8, height = 6)
 
-g2combined_line_plots_MEX
 
-g3combined_line_plots_MEX
+viz3.2 = g2combined_line_plots_MEX
+ggsave("viz3.2.png", viz3.2, width = 8, height = 6)
+
+viz3.3 = g3combined_line_plots_MEX
+ggsave("viz3.3.png", viz3.3, width = 8, height = 6)
+
+viz3.4 = g4combined_line_plots_MEX
+ggsave("viz3.4.png", viz3.4, width = 8, height = 6)
 
 #######################################################################################################
 #Explore:
@@ -323,10 +381,17 @@ All_prod_exp = ggplot(trade_volume_df |> filter(`Product Group` == "All Products
 #Visualization 4
 
 All_prod_exp
+ggsave("viz4.1.png", All_prod_exp, width = 8, height = 6)
+
 
 summary_stats$`Product Group`
 summary_stats$mean_value
 
-################################################################################
-```
+#--#
+
+num_beg <- max(trade_volume_df$Value[trade_volume_df$`Partner Name` == "Mexico" & trade_volume_df$Year == 1994 & trade_volume_df$`Trade Flow` == "Export" & trade_volume_df$`Product Group` == "All Products"])
+num_end <- max(trade_volume_df$Value[trade_volume_df$`Partner Name` == "Mexico" & trade_volume_df$Year == 2020 & trade_volume_df$`Trade Flow` == "Export" & trade_volume_df$`Product Group` == "All Products"])
+
+percent_increase <- ((num_end / num_beg)) * 100
+percent_increase
 
